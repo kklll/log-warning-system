@@ -15,4 +15,6 @@ public interface Server {
      * @description: 主要进行日志的采集工作以及日志的发送工作
      */
     public void serve();
+
+    public void registe();
 }

@@ -1,8 +1,10 @@
 package com.kklll.logwarningsystem.core.config;
 
-import com.alibaba.nacos.api.config.annotation.NacosValue;
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
 /**
@@ -14,16 +16,18 @@ import org.springframework.context.annotation.Configuration;
  **/
 @Configuration
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
+@ConfigurationProperties(prefix = "server")
 public class ServerConfig {
     //服务名称
     private String name;
     //服务描述
-    private String description;
-    //日志路径
-    private String logDir;
-    //远程服务Ip地址(KAFKA消息队列)
-    private String remoteAddress;
-    //远程服务端口(KAFKA端口)
-    private String remotePort;
-
+    private String description="null";
+    //服务IP地址
+    private String host;
+    //服务端口
+    private Integer port;
+    //服务地理位置
+    private String location="未指定地域";
 }
