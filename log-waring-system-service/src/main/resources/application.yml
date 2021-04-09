@@ -1,8 +1,30 @@
+# spring数据源配置
 spring:
   datasource:
-    url: jdbc:mysql://xxx/securityDB?characterEncoding=UTF-8&&serverTimezone=Asia/Shanghai&&autoReconnect=true&&failOverReadOnly=false
+    url: jdbc:mysql://kklll.cn:3306/log_warning_system?characterEncoding=UTF-8&&serverTimezone=Asia/Shanghai&&autoReconnect=true&&failOverReadOnly=false
     username: root
-    password: xxx
-  profiles:
-    active: dev
-
+    password: root
+#开启HTTP2
+server:
+  http2:
+    enabled: on
+# Zookeeper配置
+zk:
+  # ip及端口
+  address: kklll.cn:2181
+  # 连接超时时间
+  timeout: 30000
+  # node名称（服务的所有信息都挂在这个根节点下面）
+  rootNode: /log-service
+jwt:
+  #jwt密钥
+  secretKey: djasndasduyasdhb@@sdaKK;;.
+  #jwt过期时间，单位：分钟
+  timeout: 360
+es:
+  # elasticSearch集群ip地址及端口
+  host: kklll.cn:9200
+# 日志文件存储位置
+logging:
+  file:
+    path: .

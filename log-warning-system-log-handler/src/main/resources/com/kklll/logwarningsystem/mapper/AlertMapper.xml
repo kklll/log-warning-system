@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kklll.logwarningsystem.mapper.AlertMapper">
+  <resultMap id="BaseResultMap" type="com.kklll.logwarningsystem.pojo.Alert">
+    <!--@mbg.generated-->
+    <!--@Table alert-->
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="serverName" jdbcType="VARCHAR" property="servername" />
+    <result column="alertName" jdbcType="VARCHAR" property="alertname" />
+    <result column="level" jdbcType="INTEGER" property="level" />
+    <result column="alertDate" jdbcType="TIMESTAMP" property="alertdate" />
+    <result column="handleDate" jdbcType="TIMESTAMP" property="handledate" />
+    <result column="handler" jdbcType="VARCHAR" property="handler" />
+    <result column="content" jdbcType="VARCHAR" property="content" />
+    <result column="state" jdbcType="INTEGER" property="state" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    <!--@mbg.generated-->
+    id, serverName, alertName, `level`, alertDate, handleDate, `handler`, content, `state`
+  </sql>
+</mapper>

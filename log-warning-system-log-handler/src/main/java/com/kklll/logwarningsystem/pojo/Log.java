@@ -1,8 +1,5 @@
-package com.kklll.logwarningsystem.core.pojo;
-
+package com.kklll.logwarningsystem.pojo;
 import lombok.Data;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Configuration;
 
 import java.util.Date;
 
@@ -14,11 +11,8 @@ import java.util.Date;
  * @Version 1.0
  **/
 @Data
-@Configuration
 public class Log {
-    @Value("${server.host}")
     private String origin;
-    @Value("${server.name}")
     private String serverName;
     private Date time;
     private String logType;

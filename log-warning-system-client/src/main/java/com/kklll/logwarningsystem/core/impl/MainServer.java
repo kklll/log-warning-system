@@ -53,13 +53,13 @@ public class MainServer implements Server {
     @Override
     public void registe() {
         try {
-            if (zkClient.exists(zkconfig.getRootNode(), null) == null) {
+            if (exists(zkconfig.getRootNode(), false) == null) {
                 zkClient.create(zkconfig.getRootNode(), null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             }
-            if (zkClient.exists(zkconfig.getRootNode() + "/all", null) == null) {
+            if (exists(zkconfig.getRootNode() + "/all", false) == null) {
                 zkClient.create(zkconfig.getRootNode() + "/all", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             }
-            if (zkClient.exists(zkconfig.getRootNode() + "/online", null) == null) {
+            if (exists(zkconfig.getRootNode() + "/online", false) == null) {
                 zkClient.create(zkconfig.getRootNode() + "/online", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             }
             byte[] bytes = new byte[0];
@@ -69,13 +69,18 @@ public class MainServer implements Server {
             } catch (JsonProcessingException e) {
                 log.error(e.getMessage());
             }
-            zkClient.create(zkconfig.getRootNode() + "/all/" + serverConfig.getName(), bytes, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
-            zkClient.create(zkconfig.getRootNode() + "/online/" + serverConfig.getName(), bytes, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+            if (exists(zkconfig.getRootNode() + "/online/" + serverConfig.getName(), false) == null) {
+                zkClient.create(zkconfig.getRootNode() + "/online/" + serverConfig.getName(), bytes, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+            }
+            if (exists(zkconfig.getRootNode() + "/all/"+serverConfig.getName(), false) == null) {
+                zkClient.create(zkconfig.getRootNode() + "/all/" + serverConfig.getName(), bytes, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            }
             byte[] data = zkClient.getData(zkconfig.getRootNode() + "/online/" + serverConfig.getName(), false, null);
             log.error("服务信息: " + new String(data, StandardCharsets.UTF_8));
             log.error("服务注册完成------------进入服务阶段");
         } catch (KeeperException | InterruptedException e) {
             log.error(e.getMessage());
+            e.printStackTrace();
             System.exit(1);
         }
     }
