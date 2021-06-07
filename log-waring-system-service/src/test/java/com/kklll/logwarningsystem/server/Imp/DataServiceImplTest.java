@@ -10,12 +10,14 @@ import org.elasticsearch.search.aggregations.*;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramAggregationBuilder;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
 import org.elasticsearch.search.aggregations.bucket.histogram.Histogram;
+import org.elasticsearch.search.aggregations.bucket.histogram.LongBounds;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import javax.xml.crypto.Data;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -54,14 +56,20 @@ class DataServiceImplTest {
 
     @Test
     void rangeSearch() {
+        Date end = new Date();
+        Calendar instance = Calendar.getInstance();
+        instance.setTime(new Date());
+        instance.add(Calendar.DAY_OF_MONTH, -1);
+//        instance.getTime().getTime()
         SearchRequest searchRequest = new SearchRequest("logs");
         DateHistogramAggregationBuilder field = AggregationBuilders.dateHistogram("times").field("time")
-                .calendarInterval(DateHistogramInterval.MINUTE).timeZone(ZoneId.of("+08:00"))
-                .format("yyyy-MM-dd HH:mm:ss").order(BucketOrder.key(false));
+                .calendarInterval(DateHistogramInterval.HOUR).timeZone(ZoneId.of("+08:00"))
+                .format("yyyy-MM-dd HH:mm:ss").order(BucketOrder.key(false)).extendedBounds
+                        (new LongBounds(instance.getTime().getTime(),end.getTime()));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.query(QueryBuilders.matchQuery("logType", "Error"));
         searchSourceBuilder.aggregation(field);
-        searchSourceBuilder.size(5);
+        searchSourceBuilder.size(20);
         searchRequest.source(searchSourceBuilder);
         try {
             SearchResponse search = client.search(searchRequest, RequestOptions.DEFAULT);
@@ -82,7 +90,7 @@ class DataServiceImplTest {
                     } catch (ParseException e) {
                         e.printStackTrace();
                     }
-                }else{
+                } else {
                     break;
                 }
 
@@ -92,13 +100,29 @@ class DataServiceImplTest {
         }
     }
 
-    @Test
-    void createIndexByType() {
 
+    @Test
+    void testTermQuery() {
+        SearchRequest searchRequest = new SearchRequest();
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        searchSourceBuilder.query(QueryBuilders.termsQuery("logType.keyword", "Error"));
+        searchRequest.source(searchSourceBuilder);
+        try {
+            SearchResponse search = client.search(searchRequest, RequestOptions.DEFAULT);
+            System.out.println(search.getHits().getTotalHits().value);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Test
     void getSearchInfo() {
         dataService.getSearchInfo(null);
     }
+    @Test
+    public void testTime(){
+        System.out.println(new Date().getTime());
+    }
 }
+

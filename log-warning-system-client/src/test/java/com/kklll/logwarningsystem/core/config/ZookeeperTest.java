@@ -5,6 +5,7 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.io.IOException;
@@ -20,35 +21,22 @@ import java.util.List;
  **/
 @SpringBootTest
 public class ZookeeperTest {
+    @Autowired
     ZooKeeper zooKeeper;
 
     @Test
     public void testZk() {
         try {
-            zooKeeper = new ZooKeeper("kklll.cn", 3000, new Watcher() {
-                @Override
-                public void process(WatchedEvent watchedEvent) {
-                    try {
-                        getChildren();
-                    } catch (KeeperException | InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
-        } catch (IOException e) {
+            List<String> children = zooKeeper.getChildren("/log-service/online", true);
+            //在线主机名称集合
+            List<String> hostNames = new ArrayList<>();
+            for (String c : children) {
+                hostNames.add(c);
+            }
+            System.out.println("所有在线的HostName" + hostNames);
+        } catch (KeeperException | InterruptedException e) {
             e.printStackTrace();
         }
-
     }
 
-    private void getChildren() throws KeeperException, InterruptedException {
-        List<String> children = zooKeeper.getChildren("/", true);
-        //主机名称集合
-        List<String> hostNames = new ArrayList<>();
-        for (String c : children) {
-            byte[] data = zooKeeper.getData("/" + c, false, null);
-            hostNames.add(c);
-        }
-        System.out.println("所有在线的HostName" + hostNames);
-    }
 }

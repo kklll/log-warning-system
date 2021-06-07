@@ -1,14 +1,24 @@
 package com.kklll.logwarningsystem.server.Imp;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.kklll.logwarningsystem.mapper.AlertMapper;
+import com.kklll.logwarningsystem.pojo.Alert;
+import com.kklll.logwarningsystem.pojo.AlertSearchCondition;
 import com.kklll.logwarningsystem.pojo.Log;
 import com.kklll.logwarningsystem.pojo.SearchCondition;
 import com.kklll.logwarningsystem.server.interfaces.DataService;
+import com.kklll.logwarningsystem.util.JwtUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.lucene.queryparser.xml.builders.BooleanQueryBuilder;
+import org.apache.lucene.search.BooleanQuery;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.Aggregations;
@@ -16,11 +26,14 @@ import org.elasticsearch.search.aggregations.BucketOrder;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramAggregationBuilder;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
 import org.elasticsearch.search.aggregations.bucket.histogram.Histogram;
+import org.elasticsearch.search.aggregations.bucket.histogram.LongBounds;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 import java.io.IOException;
 import java.text.ParseException;
@@ -38,6 +51,12 @@ import java.util.*;
 @Service
 @Slf4j
 public class DataServiceImpl implements DataService {
+    @Autowired
+    AlertMapper alertMapper;
+
+    @Autowired
+    JwtUtils jwtUtils;
+
     @Autowired
     @Qualifier("restHighLevelClient")
     RestHighLevelClient client;
@@ -68,47 +87,36 @@ public class DataServiceImpl implements DataService {
 
     @Override
     public SearchResponse getSearchInfo(SearchCondition searchCondition) {
-        List<Log> res = new ArrayList<>();
         SearchRequest searchRequest = new SearchRequest("logs");
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         //查询条件
         //时间范围过滤
-        searchSourceBuilder.query(QueryBuilders.rangeQuery("time").from(searchCondition.getTime().get(0)).to(searchCondition.getTime().get(1)));
+        BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
+        boolQueryBuilder.must(QueryBuilders.rangeQuery("time")
+                .from(searchCondition.getTime().get(0))
+                .to(searchCondition.getTime().get(1)));
         //标签过滤
         if (!searchCondition.getType().contains(ALL)) {
-            BoolQueryBuilder logType = null;
-            for (int i = 0; i < searchCondition.getType().size(); i++) {
-                if (i == 0) {
-                    logType = QueryBuilders.boolQuery().should(QueryBuilders.matchQuery(
-                            "logType", searchCondition.getType().get(i)));
-                } else {
-                    logType.should(QueryBuilders.matchQuery("logType", searchCondition.getType().get(i)));
-                }
-            }
-            searchSourceBuilder.query(logType);
+            boolQueryBuilder.must(QueryBuilders.termsQuery("logType.keyword", searchCondition.getType()));
         }
         //服务名称过滤
         if (!searchCondition.getServices().contains(ALL)) {
-            BoolQueryBuilder logType = null;
-            for (int i = 0; i < searchCondition.getServices().size(); i++) {
-                if (i == 0) {
-                    logType = QueryBuilders.boolQuery().should(QueryBuilders.matchQuery(
-                            "serverName", searchCondition.getServices().get(i)));
-                } else {
-                    logType.should(QueryBuilders.matchQuery("serverName", searchCondition.getServices().get(i)));
-                }
-            }
-            searchSourceBuilder.query(logType);
+            boolQueryBuilder.must(QueryBuilders.termsQuery("serverName.keyword", searchCondition.getServices()));
         }
         if (!searchCondition.getKeyword().isEmpty()) {
-            searchSourceBuilder.query(QueryBuilders.matchQuery("content", searchCondition.getKeyword()));
+            boolQueryBuilder.must(QueryBuilders.matchQuery("content", searchCondition.getKeyword()));
         }
+        //设置高亮
+        HighlightBuilder highlightBuilder = new HighlightBuilder();
+        highlightBuilder.field("content");
+        searchSourceBuilder.highlighter(highlightBuilder);
         //设置分页
         searchSourceBuilder.from((searchCondition.getCurrPage() - 1) * searchCondition.getPageSize());
         //设置每一页的大小
         searchSourceBuilder.size(searchCondition.getPageSize());
         //按时间进行排序
         searchSourceBuilder.sort("time", SortOrder.DESC);
+        searchSourceBuilder.query(boolQueryBuilder);
         searchRequest.source(searchSourceBuilder);
         try {
             return client.search(searchRequest, RequestOptions.DEFAULT);
@@ -118,7 +126,77 @@ public class DataServiceImpl implements DataService {
         return null;
     }
 
+    @Override
+    public List<Alert> getAlert() {
+        //从数据库里面查
+        QueryWrapper<Alert> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("state", 1);
+        return alertMapper.selectList(queryWrapper);
+    }
 
+    @Override
+    public int updateAlert(Alert alert, String token) {
+        UpdateWrapper<Alert> updateWrapper = new UpdateWrapper<Alert>();
+        updateWrapper.eq("id", alert.getId())
+                .set("state", 2)
+                .set("handleDate", new Date())
+                .set("handler", jwtUtils.getUsername(token));
+        return alertMapper.update(null, updateWrapper);
+    }
+
+    @Override
+    public int ignoreAlert(Alert alert, String token) {
+        UpdateWrapper<Alert> updateWrapper = new UpdateWrapper<Alert>();
+        updateWrapper.eq("id", alert.getId())
+                .set("state", 4)
+                .set("handleDate", new Date())
+                .set("handler", jwtUtils.getUsername(token));
+        return alertMapper.update(null, updateWrapper);
+    }
+
+    @Override
+    public int handleAlert(Alert alert, String token) {
+        UpdateWrapper<Alert> updateWrapper = new UpdateWrapper<Alert>();
+        updateWrapper.eq("id", alert.getId())
+                .set("state", 3)
+                .set("handleDate", new Date())
+                .set("handler", jwtUtils.getUsername(token));
+        return alertMapper.update(null, updateWrapper);
+    }
+
+    @Override
+    public Map<String, Object> alertSearch(AlertSearchCondition condition) {
+        //构造查询条件
+        QueryWrapper<Alert> queryWrapper = new QueryWrapper<>();
+        if (!condition.getServices().contains("All")) {
+            queryWrapper.in("serverName", condition.getServices());
+        }
+        if (!condition.getLevel().contains(0)) {
+            queryWrapper
+                    .in("level", condition.getLevel());
+        }
+        if (!condition.getState().contains(0)) {
+            queryWrapper
+                    .in("state", condition.getState());
+        }
+        queryWrapper
+                .between("alertDate", condition.getTime().get(0), condition.getTime().get(1))
+                .orderBy(true, false, "id")
+                .like("content", condition.getKeyword());
+        Integer count = alertMapper.selectCount(queryWrapper);
+        Map<String, Object> map = new HashMap<>();
+        map.put("total", count);
+        map.put("res", alertMapper.selectPage(new Page<>(condition.getCurrPage(), condition.getPageSize(), true)
+                , queryWrapper));
+        return map;
+    }
+
+
+    /**
+     * @author DeepBlue
+     * @date: 2021/5/13 10:24
+     * @description: 获取各个时间段的日志数据
+     */
     private TreeMap<String, Object> getCount(int limit, String type) {
         TreeMap<String, Object> res = new TreeMap<>(new Comparator<String>() {
             @Override
@@ -132,10 +210,14 @@ public class DataServiceImpl implements DataService {
                 return 0;
             }
         });
+        Calendar instance = Calendar.getInstance();
+        instance.setTime(new Date());
+        instance.add(Calendar.DAY_OF_MONTH, -1);
         SearchRequest searchRequest = new SearchRequest("logs");
         DateHistogramAggregationBuilder field = AggregationBuilders.dateHistogram("times").field("time")
                 .calendarInterval(DateHistogramInterval.HOUR).timeZone(ZoneId.of("+08:00"))
-                .format("yyyy-MM-dd HH:mm:ss").order(BucketOrder.key(false));
+                .format("yyyy-MM-dd HH:mm:ss").order(BucketOrder.key(false))
+                .extendedBounds(new LongBounds(instance.getTime().getTime(),System.currentTimeMillis()));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.query(QueryBuilders.matchQuery("logType", type));
         searchSourceBuilder.aggregation(field);

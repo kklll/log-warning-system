@@ -38,6 +38,7 @@ public class MainServiceImpl implements MainService {
 
     @KafkaListener(topics = "${kafka.topic}")
     public void onMessage(String message) {
+        System.err.println(message);
         collectionLogs(message);
         detectLogs(message);
     }

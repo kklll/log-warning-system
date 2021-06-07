@@ -1,6 +1,7 @@
 package com.kklll.logwarningsystem.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kklll.logwarningsystem.detector.Detector;
 import com.kklll.logwarningsystem.pojo.User;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.bulk.BulkRequest;
@@ -179,7 +180,7 @@ class MainServiceTest {
     }
 
     @Test
-    void testSqlInjection()  {
+    void testSqlInjection() {
         Connection con;
         String driver = "com.mysql.cj.jdbc.Driver";
         //这里数据库名为mydatabase
@@ -222,5 +223,14 @@ class MainServiceTest {
         }
     }
 
-
+    @Test
+    void testMatch() {
+        String or = "2021-04-09 02:58:41.301 ERROR 26920 --- " +
+                "[http-nio-8080-exec-8] c.k.l.c.SQLInjecttionCOntroller " +
+                ": You have an error in your SQL syntax; check the manual" +
+                " that corresponds to your MySQL server " +
+                "version for the right syntax to use near" +
+                " '' and password='1' or '1'' at line 1";
+        System.out.println(or.matches("\'.*?\'"));
+    }
 }

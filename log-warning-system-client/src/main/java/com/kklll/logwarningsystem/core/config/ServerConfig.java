@@ -22,7 +22,6 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "server")
 public class ServerConfig {
     //服务名称
-//    @Value("${server.name}")
     private String name;
     //服务描述
     private String description="null";

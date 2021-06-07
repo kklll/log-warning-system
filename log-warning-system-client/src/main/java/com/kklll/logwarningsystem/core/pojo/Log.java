@@ -24,3 +24,4 @@ public class Log {
     private String logType;
     private String content;
 }
+

@@ -8,6 +8,7 @@ spring:
 server:
   http2:
     enabled: on
+  port: 8080
 # Zookeeper配置
 zk:
   # ip及端口

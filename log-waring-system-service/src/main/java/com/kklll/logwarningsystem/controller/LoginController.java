@@ -29,4 +29,5 @@ public class LoginController {
         Map<String, String> login = userService.login(user);
         return ResultBody.success(login);
     }
+
 }

@@ -33,6 +33,11 @@ public class DataHandlerServicesImpl implements DataHandlerService {
 
     @Override
     public void handleData(Log log) {
-
+        for (Detector detector : detectors) {
+            Map<String, Object> res = detector.detectLog(log);
+            if (res != null) {
+                detector.collectInformation(log, res);
+            }
+        }
     }
 }

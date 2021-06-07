@@ -8,6 +8,7 @@ import com.kklll.logwarningsystem.server.interfaces.UserService;
 import com.kklll.logwarningsystem.util.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -61,5 +62,13 @@ public class UserServiceImpl implements UserService {
         userInfo.setName("李凯凯");
         userInfo.setAvatar("https://cdn.jsdelivr.net/gh/kklll/Resources@master/pics/head.jpg");
         return userInfo;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public int updateUser(User user) {
+        User dbUser = userMapper.selectOne(new QueryWrapper<User>().eq("username", user.getUsername()));
+        user.setPassword(dbUser.getPassword());
+        return userMapper.update(user, new QueryWrapper<User>().eq("username", user.getUsername()));
     }
 }

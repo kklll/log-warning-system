@@ -14,6 +14,9 @@ import java.util.Map;
  **/
 @Service
 public interface Detector {
+    String ERROR="Error";
+    String WARN="Warn";
+    String INFO="Info";
     /**
      * @author DeepBlue
      * @date: 2021/4/7 16:24

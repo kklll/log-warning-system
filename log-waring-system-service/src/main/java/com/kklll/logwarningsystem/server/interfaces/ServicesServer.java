@@ -18,13 +18,13 @@ public interface ServicesServer {
      * @date: 2021/3/10 17:25
      * @description: 获取当前在线的服务
      */
-    public List<ServiceInfo> getOnlineServices();
+    List<ServiceInfo> getOnlineServices();
     /**
      * @author DeepBlue
      * @date: 2021/3/10 17:25
      * @description: 获取当前所有的服务
      */
-    public List<ServiceInfo> getAllServices();
+    List<ServiceInfo> getAllServices();
 
     /**
      * @author DeepBlue

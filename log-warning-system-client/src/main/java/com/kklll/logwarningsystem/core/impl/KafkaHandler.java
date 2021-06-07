@@ -1,10 +1,8 @@
 package com.kklll.logwarningsystem.core.impl;
 
-import cn.hutool.core.date.DateTime;
 import cn.hutool.core.io.LineHandler;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kklll.logwarningsystem.core.config.ServerConfig;
 import com.kklll.logwarningsystem.core.pojo.Log;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,10 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
-import java.sql.Time;
-import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Locale;
 
 /**
  * @ClassName KafkaHandler
@@ -51,7 +46,6 @@ public class KafkaHandler implements LineHandler {
         logInfo.setContent(s);
         try {
             kafkaTemplate.send(topic, objectMapper.writeValueAsString(logInfo));
-            log.error(objectMapper.writeValueAsString(logInfo));
         } catch (JsonProcessingException e) {
             log.error(e.getMessage());
         }

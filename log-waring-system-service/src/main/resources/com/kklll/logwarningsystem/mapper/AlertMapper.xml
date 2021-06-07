@@ -11,7 +11,7 @@
     <result column="alertDate" jdbcType="TIMESTAMP" property="alertdate" />
     <result column="handleDate" jdbcType="TIMESTAMP" property="handledate" />
     <result column="handler" jdbcType="VARCHAR" property="handler" />
-    <result column="content" jdbcType="VARCHAR" property="content" />
+    <result column="content" jdbcType="LONGVARCHAR" property="content" />
     <result column="state" jdbcType="INTEGER" property="state" />
   </resultMap>
   <sql id="Base_Column_List">

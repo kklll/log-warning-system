@@ -21,4 +21,6 @@ public interface UserService {
 
 
     UserInfo getUserInfo();
+
+    int updateUser(User user);
 }

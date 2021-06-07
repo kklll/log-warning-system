@@ -16,4 +16,5 @@ class LogWaringSystemApplicationTests {
         log.warn("{} Not OK", "logback");
     }
 
+
 }
